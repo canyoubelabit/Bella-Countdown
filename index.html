@@ -730,18 +730,41 @@ Lab you po.</p>
       }
     });
   };
-  function startBackgroundMusic(){
+  function startBackgroundMusic(forceAudible){
     if(!ytReady || !ytPlayer || !ytPlayer.playVideo){ ytStartQueued=true; return; }
     try{
-      ytPlayer.mute(); // start muted to satisfy autoplay policy, then unmute right after (gesture-triggered call)
-      ytPlayer.playVideo();
-      if(soundOn){ setTimeout(function(){ try{ ytPlayer.unMute(); ytPlayer.setVolume(45); }catch(e){} }, 150); }
+      if(forceAudible){
+        // countdown just ended: try to autoplay WITH sound (works if the visitor
+        // has interacted with the page at all already, which browsers require)
+        ytPlayer.playVideo();
+        ytPlayer.unMute();
+        ytPlayer.setVolume(45);
+        soundOn=true;
+        if(soundToggle) soundToggle.textContent='🔊 Sound on';
+      } else {
+        ytPlayer.mute();
+        ytPlayer.playVideo();
+        if(soundOn){ setTimeout(function(){ try{ ytPlayer.unMute(); ytPlayer.setVolume(45); }catch(e){} }, 150); }
+      }
     }catch(e){ /* fail silently */ }
   }
   function stopBackgroundMusic(){
     try{ if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo(); }catch(e){}
   }
   loadYouTubeAPI();
+
+  /* prime audio on first user interaction so later autoplay-with-sound is allowed by browser policy */
+  var pageInteracted=false;
+  function markInteracted(){
+    if(pageInteracted) return;
+    pageInteracted=true;
+    document.removeEventListener('click', markInteracted);
+    document.removeEventListener('touchstart', markInteracted);
+    document.removeEventListener('keydown', markInteracted);
+  }
+  document.addEventListener('click', markInteracted, {passive:true});
+  document.addEventListener('touchstart', markInteracted, {passive:true});
+  document.addEventListener('keydown', markInteracted, {passive:true});
 
   /* ---------- sound (soft chime, gesture-gated, muted by default) ---------- */
   var audioCtx=null, soundOn=false;
@@ -822,19 +845,26 @@ Lab you po.</p>
 
   // per-video mute toggle buttons
   document.querySelectorAll('.video-mute').forEach(function(btn){
-    btn.addEventListener('click', function(e){
+    function toggleMute(e){
       e.stopPropagation();
+      e.preventDefault();
       var v=btn.parentElement.querySelector('video');
       if(!v) return;
       v.muted=!v.muted;
       btn.textContent = v.muted ? '🔇' : '🔊';
-    });
+    }
+    btn.addEventListener('click', toggleMute);
+    btn.addEventListener('touchend', toggleMute);
   });
 
   var carouselEl=document.getElementById('carousel');
   var touchStartX=null;
-  carouselEl.addEventListener('touchstart', function(e){ touchStartX=e.touches[0].clientX; clearInterval(carouselTimer); }, {passive:true});
+  carouselEl.addEventListener('touchstart', function(e){
+    if(e.target.closest('.video-mute')) return;
+    touchStartX=e.touches[0].clientX; clearInterval(carouselTimer);
+  }, {passive:true});
   carouselEl.addEventListener('touchend', function(e){
+    if(e.target.closest('.video-mute')) return;
     if(touchStartX===null) return;
     var dx=e.changedTouches[0].clientX-touchStartX;
     if(Math.abs(dx)>40){
@@ -851,6 +881,7 @@ Lab you po.</p>
   carouselEl.addEventListener('click', function(e){
     // desktop click support (touch devices already handled above)
     if('ontouchstart' in window) return;
+    if(e.target.closest('.video-mute')) return;
     var rect=carouselEl.getBoundingClientRect();
     var clickX=e.clientX-rect.left;
     goToSlide(curSlide + (clickX < rect.width/2 ? -1 : 1));
@@ -866,7 +897,7 @@ Lab you po.</p>
     launchConfetti();
     startCarouselAuto();
     if(soundOn) playChime();
-    startBackgroundMusic();
+    startBackgroundMusic(true);
     document.body.style.overflow='hidden';
   }
   document.getElementById('closeCel').addEventListener('click', function(){
