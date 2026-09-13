@@ -321,9 +321,29 @@
     color:#fff; border:none;
   }
 
+  /* draw the eye to Sound toggle until it's tapped once */
+  .pill-btn.sound-pulse{
+    background:linear-gradient(120deg, var(--pink-deep), var(--blue-deep));
+    color:#fff; border:none;
+    box-shadow:0 0 0 0 rgba(220,90,150,.55);
+    animation:soundPulse 1.6s ease-out infinite;
+  }
+  @keyframes soundPulse{
+    0%{ box-shadow:0 0 0 0 rgba(220,90,150,.55); transform:scale(1); }
+    60%{ box-shadow:0 0 0 14px rgba(220,90,150,0); transform:scale(1.05); }
+    100%{ box-shadow:0 0 0 0 rgba(220,90,150,0); transform:scale(1); }
+  }
+  .sound-hint{
+    font-size:.72rem; font-weight:700; color:var(--pink-ink);
+    opacity:.85; margin:-6px 0 12px; text-align:center;
+    animation:hintFade 1.6s ease-in-out infinite;
+  }
+  @keyframes hintFade{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+
   @media (prefers-reduced-motion: reduce){
     .float-heart, .cel-heart, .unit.tick .num { animation:none !important; }
     .cel-card{ animation:none !important; }
+    .pill-btn.sound-pulse, .sound-hint{ animation:none !important; }
   }
 </style>
 </head>
@@ -563,8 +583,9 @@ Lab you po.</p>
       </span>
     </a>
 
+    <p class="sound-hint" id="soundHint">👆 Tap for music &amp; sound</p>
     <div class="cel-actions">
-      <button class="pill-btn" id="soundToggle" type="button">🔇 Sound off</button>
+      <button class="pill-btn sound-pulse" id="soundToggle" type="button">🔇 Sound off</button>
       <button class="pill-btn primary" id="closeCel" type="button">Close, my love 🩷</button>
     </div>
   </div>
@@ -734,13 +755,30 @@ Lab you po.</p>
     if(!ytReady || !ytPlayer || !ytPlayer.playVideo){ ytStartQueued=true; return; }
     try{
       if(forceAudible){
-        // countdown just ended: try to autoplay WITH sound (works if the visitor
-        // has interacted with the page at all already, which browsers require)
+        // countdown just ended: try to autoplay WITH sound (only actually works
+        // if the visitor has already interacted with the page at some point,
+        // which browsers require before allowing audible autoplay)
         ytPlayer.playVideo();
         ytPlayer.unMute();
         ytPlayer.setVolume(45);
-        soundOn=true;
-        if(soundToggle) soundToggle.textContent='🔊 Sound on';
+        // verify shortly after whether the browser actually allowed it —
+        // don't just assume success, since a silently-blocked attempt would
+        // otherwise show a misleading "Sound on" state
+        setTimeout(function(){
+          var actuallyPlaying=false;
+          try{ actuallyPlaying = !ytPlayer.isMuted() && ytPlayer.getPlayerState()===1; }catch(e){}
+          if(actuallyPlaying){
+            soundOn=true;
+            if(soundToggle){
+              soundToggle.textContent='🔊 Sound on';
+              soundToggle.classList.remove('sound-pulse');
+            }
+            var hint=document.getElementById('soundHint');
+            if(hint) hint.style.display='none';
+          }
+          // if it didn't actually start, leave soundOn/false and the pulsing
+          // "Sound on" button + hint visible so she can tap it herself
+        }, 600);
       } else {
         ytPlayer.mute();
         ytPlayer.playVideo();
@@ -790,6 +828,9 @@ Lab you po.</p>
   soundToggle.addEventListener('click', function(){
     soundOn=!soundOn;
     soundToggle.textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off';
+    soundToggle.classList.remove('sound-pulse');
+    var hint=document.getElementById('soundHint');
+    if(hint) hint.style.display='none';
     if(soundOn){
       playChime();
       try{ if(ytPlayer && ytPlayer.unMute){ ytPlayer.unMute(); ytPlayer.setVolume(45); } }catch(e){}
