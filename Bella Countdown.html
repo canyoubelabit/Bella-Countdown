@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Lab &amp; Bella" />
+<meta name="theme-color" content="#ffd6e8" />
+<title>Paul &amp; Bella - Reunion Countdown</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="icon.png" />
+<style>
+  :root{
+    --pink:#ffd6e8;
+    --pink-deep:#ff9ec7;
+    --pink-ink:#c2447a;
+    --blue:#cfe9ff;
+    --blue-deep:#9cd0ff;
+    --blue-ink:#3f7fb8;
+    --cream:#fff7fb;
+    --ink:#5a3350;
+    --ink-soft:#8a6b82;
+    --gold:#ffe1a8;
+    --radius-lg:28px;
+    --radius-md:18px;
+    --shadow:0 20px 45px -20px rgba(194,68,122,.35);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100dvh;
+    font-family:"Quicksand","Avenir Next",-apple-system,BlinkMacSystemFont,sans-serif;
+    background:
+      radial-gradient(circle at 15% 8%, #ffe6f2 0%, transparent 45%),
+      radial-gradient(circle at 85% 12%, #dcefff 0%, transparent 45%),
+      radial-gradient(circle at 50% 100%, #ffeef7 0%, transparent 55%),
+      linear-gradient(160deg, var(--pink) 0%, var(--blue) 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    overflow-x:hidden;
+    position:relative;
+    -webkit-font-smoothing:antialiased;
+  }
+  @font-face{
+    font-family:"Quicksand";
+    src:local("Quicksand");
+  }
+
+  /* floating hearts background */
+  #heartField{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .float-heart{
+    position:absolute; bottom:-10%;
+    font-size:1.4rem; opacity:.35;
+    animation:floatUp linear infinite;
+    will-change:transform;
+    filter:drop-shadow(0 2px 6px rgba(255,158,199,.4));
+  }
+  @keyframes floatUp{
+    0%{ transform:translateY(0) translateX(0) rotate(0deg); opacity:0; }
+    10%{ opacity:.4; }
+    90%{ opacity:.3; }
+    100%{ transform:translateY(-120vh) translateX(var(--drift,20px)) rotate(25deg); opacity:0; }
+  }
+
+  main{
+    position:relative; z-index:1;
+    min-height:100dvh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:max(28px,env(safe-area-inset-top)) 20px max(40px,env(safe-area-inset-bottom));
+    text-align:center;
+  }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--pink-ink); font-weight:700;
+    background:rgba(255,255,255,.55);
+    padding:7px 16px; border-radius:999px;
+    border:1px solid rgba(255,158,199,.5);
+    backdrop-filter:blur(6px);
+    margin-bottom:18px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--blue-ink);}
+
+  h1{
+    font-family:"Playfair Display","Georgia",serif;
+    font-weight:700; font-style:italic;
+    font-size:clamp(1.9rem, 7vw, 3.1rem);
+    line-height:1.15;
+    margin:0 0 8px;
+    background:linear-gradient(100deg, var(--pink-ink), var(--blue-ink) 70%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  @font-face{font-family:"Playfair Display"; src:local("Playfair Display");}
+
+  .subline{
+    font-size:clamp(.92rem, 3.2vw, 1.05rem);
+    color:var(--ink-soft);
+    max-width:340px;
+    margin:0 0 34px;
+    line-height:1.55;
+  }
+  .subline b{color:var(--pink-ink); font-weight:700;}
+
+  /* countdown */
+  #countdown{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    gap:clamp(8px,2.6vw,16px);
+    width:100%; max-width:420px;
+    margin-bottom:30px;
+  }
+  .unit{
+    background:linear-gradient(160deg, rgba(255,255,255,.75), rgba(255,255,255,.45));
+    border:1px solid rgba(255,255,255,.7);
+    border-radius:var(--radius-md);
+    padding:clamp(12px,3.4vw,20px) 4px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(10px);
+    position:relative;
+    overflow:hidden;
+  }
+  .unit::after{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,.5), transparent 40%);
+    pointer-events:none;
+  }
+  .unit .num{
+    font-family:"Playfair Display",serif;
+    font-weight:700;
+    font-size:clamp(1.5rem,7vw,2.3rem);
+    color:var(--pink-ink);
+    font-variant-numeric:tabular-nums;
+    display:block;
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .unit.tick .num{ transform:scale(1.18); }
+  .unit .label{
+    font-size:.62rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--blue-ink); font-weight:700; margin-top:4px; display:block;
+  }
+
+  .heart-divider{
+    display:flex; align-items:center; gap:10px;
+    margin:4px 0 26px; color:var(--pink-deep); opacity:.8;
+  }
+  .heart-divider svg{width:16px;height:16px;}
+  .heart-divider .line{width:44px; height:1px; background:linear-gradient(90deg, transparent, var(--pink-deep), transparent);}
+
+  .date-pill{
+    font-size:.82rem; color:var(--ink-soft);
+    background:rgba(255,255,255,.5); border:1px solid rgba(255,255,255,.7);
+    padding:8px 18px; border-radius:999px; backdrop-filter:blur(6px);
+  }
+  .date-pill b{color:var(--blue-ink);}
+
+  footer.tag{
+    position:relative; z-index:1;
+    padding:18px 20px max(18px,env(safe-area-inset-bottom));
+    text-align:center; font-size:.72rem; color:var(--ink-soft); opacity:.75;
+    letter-spacing:.04em;
+  }
+
+  /* hidden test trigger, top right */
+  #testZone{
+    position:fixed; top:0; right:0;
+    width:64px; height:64px;
+    z-index:50;
+    background:transparent;
+    border:none; padding:0; margin:0;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ---------- CELEBRATION OVERLAY ---------- */
+  #celebration{
+    position:fixed; inset:0; z-index:100;
+    display:none;
+    align-items:center; align-items:safe center; justify-content:center;
+    padding:24px;
+    padding-top:max(24px, 4vh); padding-bottom:max(24px, 4vh);
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,214,232,.95), transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(207,233,255,.95), transparent 50%),
+      linear-gradient(160deg, #fff0f7 0%, #eaf5ff 100%);
+    overflow-y:auto;
+  }
+  #celebration.show{ display:flex; }
+
+  #confettiCanvas{ position:fixed; inset:0; z-index:101; pointer-events:none; }
+
+  .cel-card{
+    position:relative; z-index:102;
+    max-width:420px; width:100%;
+    background:rgba(255,255,255,.7);
+    border:1px solid rgba(255,255,255,.9);
+    border-radius:32px;
+    padding:clamp(24px,6vw,40px) clamp(20px,5vw,32px) 30px;
+    box-shadow:0 30px 70px -25px rgba(194,68,122,.45);
+    backdrop-filter:blur(14px);
+    text-align:center;
+    animation:popIn .7s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes popIn{
+    0%{ transform:scale(.6) translateY(30px); opacity:0; }
+    60%{ transform:scale(1.04) translateY(-4px); opacity:1; }
+    100%{ transform:scale(1) translateY(0); opacity:1; }
+  }
+
+  .cel-heart{
+    font-size:2.6rem; margin-bottom:6px;
+    animation:beat 1.15s ease-in-out infinite;
+    filter:drop-shadow(0 6px 14px rgba(255,158,199,.6));
+  }
+  @keyframes beat{
+    0%,100%{ transform:scale(1); }
+    15%{ transform:scale(1.22); }
+    30%{ transform:scale(.96); }
+    45%{ transform:scale(1.14); }
+    60%{ transform:scale(1); }
+  }
+
+  .cel-title{
+    font-family:"Playfair Display",serif; font-style:italic; font-weight:700;
+    font-size:clamp(1.5rem,6.5vw,2rem);
+    color:var(--pink-ink); margin:0 0 14px;
+  }
+
+  .cel-message{
+    font-size:clamp(1rem,4vw,1.15rem);
+    line-height:1.75; color:var(--ink);
+    margin:0 0 24px;
+    white-space:pre-wrap;
+  }
+
+  /* carousel */
+  #carousel{
+    position:relative; width:100%; aspect-ratio:4/5; max-height:380px;
+    border-radius:22px; overflow:hidden;
+    background:linear-gradient(160deg, var(--pink), var(--blue));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.6), 0 16px 36px -18px rgba(194,68,122,.5);
+    margin-bottom:18px;
+    touch-action:pan-y;
+  }
+  #carousel .slide{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity .6s ease;
+    pointer-events:none;
+  }
+  #carousel .slide.active{ opacity:1; pointer-events:auto; }
+  #carousel .slide img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  #carousel .slide video{
+    width:100%; height:100%; object-fit:cover; display:block; background:#000;
+  }
+  .video-mute{
+    position:absolute; bottom:10px; right:10px; z-index:2;
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(0,0,0,.45); color:#fff; border:none;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; cursor:pointer; backdrop-filter:blur(4px);
+  }
+  #carousel .slide .placeholder{
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    color:var(--pink-ink); opacity:.55; padding:20px; text-align:center;
+    font-size:.85rem; font-weight:600;
+  }
+  #carousel .slide .placeholder svg{width:40px;height:40px;}
+  .dots{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:22px; }
+  .dots .track{ width:120px; height:4px; border-radius:999px; background:rgba(194,68,122,.18); overflow:hidden; }
+  .dots .fill{ height:100%; background:linear-gradient(90deg, var(--pink-deep), var(--blue-deep)); border-radius:999px; transition:width .4s ease; }
+  .dots .count{ font-size:.7rem; font-weight:700; color:var(--pink-ink); letter-spacing:.03em; font-variant-numeric:tabular-nums; min-width:38px; }
+
+  /* squircle button to the live, always-current Google Photos album */
+  .squircle-link{
+    display:inline-flex; align-items:center; gap:10px;
+    text-decoration:none;
+    background:linear-gradient(135deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    border:1px solid rgba(255,255,255,.8);
+    padding:10px 18px 10px 10px;
+    margin-bottom:20px;
+    box-shadow:0 10px 24px -12px rgba(194,68,122,.4);
+    backdrop-filter:blur(8px);
+    transition:transform .2s ease;
+    /* squircle: superellipse-like shape via large, uneven radii */
+    border-radius:26px;
+  }
+  .squircle-link:active{ transform:scale(.96); }
+  .squircle-icon{
+    width:38px; height:38px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, var(--pink-deep), var(--blue-deep));
+    color:#fff;
+    /* squircle shape */
+    border-radius:38%;
+  }
+  .squircle-icon svg{ width:19px; height:19px; }
+  .squircle-text{ text-align:left; }
+  .squircle-text .t1{ display:block; font-size:.72rem; font-weight:700; color:var(--pink-ink); }
+  .squircle-text .t2{ display:block; font-size:.62rem; color:var(--ink-soft); }
+
+  .cel-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .pill-btn{
+    border:1px solid rgba(194,68,122,.25);
+    background:rgba(255,255,255,.6);
+    color:var(--pink-ink);
+    font-family:inherit; font-weight:700; font-size:.78rem;
+    letter-spacing:.04em;
+    padding:11px 18px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:6px;
+    cursor:pointer; min-height:44px;
+    transition:transform .2s ease, background .2s ease;
+  }
+  .pill-btn:active{ transform:scale(.95); }
+  .pill-btn.primary{
+    background:linear-gradient(120deg, var(--pink-deep), var(--blue-deep));
+    color:#fff; border:none;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .float-heart, .cel-heart, .unit.tick .num { animation:none !important; }
+    .cel-card{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="heartField" aria-hidden="true"></div>
+
+<!-- invisible double-tap test trigger -->
+<button id="testZone" aria-label=""></button>
+
+<main>
+  <div class="eyebrow"><span class="dot"></span> Counting every moment</div>
+
+  <h1>Home is wherever<br/>you are, Bella</h1>
+  <p class="subline">Every day that passes is one day closer to holding you again, <b>lab</b>.</p>
+
+  <div id="countdown" aria-live="polite">
+    <div class="unit" data-unit="days"><span class="num" id="dDays">00</span><span class="label">Days</span></div>
+    <div class="unit" data-unit="hours"><span class="num" id="dHours">00</span><span class="label">Hours</span></div>
+    <div class="unit" data-unit="mins"><span class="num" id="dMins">00</span><span class="label">Mins</span></div>
+    <div class="unit" data-unit="secs"><span class="num" id="dSecs">00</span><span class="label">Secs</span></div>
+  </div>
+
+  <div class="heart-divider">
+    <div class="line"></div>
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10.2-9.1C.2 9 1 5.5 4.1 4.2 6.6 3.1 9 4 12 7c3-3 5.4-3.9 7.9-2.8C23 5.5 23.8 9 22.2 11.9 19.5 16.4 12 21 12 21z"/></svg>
+    <div class="line"></div>
+  </div>
+
+  <div class="date-pill">Reunion set for <b>Sept 30, 2026</b> · 12:00 AM AEST</div>
+</main>
+
+<footer class="tag">made with every bit of my heart, for you 🩷🩵</footer>
+
+<!-- ================= CELEBRATION OVERLAY ================= -->
+<div id="celebration" role="dialog" aria-modal="true" aria-label="Reunion message">
+  <canvas id="confettiCanvas"></canvas>
+  <div class="cel-card">
+    <div class="cel-heart">💗</div>
+    <h2 class="cel-title">It's finally time</h2>
+    <p class="cel-message">Hello my poreber 👋
+May we do right by God, and become pruitpul.
+Lab you po.</p>
+
+    <div id="carousel">
+      <div class="slide active" data-idx="0" data-kind="photo"><img src="web/photos/photo_000.jpg" alt="Us" loading="eager" /></div>
+      <div class="slide" data-idx="1" data-kind="photo"><img src="web/photos/photo_001.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="2" data-kind="photo"><img src="web/photos/photo_002.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="3" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_000.jpg" src="web/videos/video_000.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="4" data-kind="photo"><img src="web/photos/photo_003.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="5" data-kind="photo"><img src="web/photos/photo_004.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="6" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_001.jpg" src="web/videos/video_001.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="7" data-kind="photo"><img src="web/photos/photo_005.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="8" data-kind="photo"><img src="web/photos/photo_006.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="9" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_002.jpg" src="web/videos/video_002.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="10" data-kind="photo"><img src="web/photos/photo_007.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="11" data-kind="photo"><img src="web/photos/photo_008.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="12" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_003.jpg" src="web/videos/video_003.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="13" data-kind="photo"><img src="web/photos/photo_009.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="14" data-kind="photo"><img src="web/photos/photo_010.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="15" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_004.jpg" src="web/videos/video_004.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="16" data-kind="photo"><img src="web/photos/photo_011.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="17" data-kind="photo"><img src="web/photos/photo_012.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="18" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_005.jpg" src="web/videos/video_005.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="19" data-kind="photo"><img src="web/photos/photo_013.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="20" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_006.jpg" src="web/videos/video_006.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="21" data-kind="photo"><img src="web/photos/photo_014.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="22" data-kind="photo"><img src="web/photos/photo_015.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="23" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_007.jpg" src="web/videos/video_007.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="24" data-kind="photo"><img src="web/photos/photo_016.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="25" data-kind="photo"><img src="web/photos/photo_017.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="26" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_008.jpg" src="web/videos/video_008.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="27" data-kind="photo"><img src="web/photos/photo_018.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="28" data-kind="photo"><img src="web/photos/photo_019.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="29" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_009.jpg" src="web/videos/video_009.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="30" data-kind="photo"><img src="web/photos/photo_020.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="31" data-kind="photo"><img src="web/photos/photo_021.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="32" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_010.jpg" src="web/videos/video_010.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="33" data-kind="photo"><img src="web/photos/photo_022.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="34" data-kind="photo"><img src="web/photos/photo_023.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="35" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_011.jpg" src="web/videos/video_011.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="36" data-kind="photo"><img src="web/photos/photo_024.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="37" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_012.jpg" src="web/videos/video_012.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="38" data-kind="photo"><img src="web/photos/photo_025.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="39" data-kind="photo"><img src="web/photos/photo_026.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="40" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_013.jpg" src="web/videos/video_013.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="41" data-kind="photo"><img src="web/photos/photo_027.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="42" data-kind="photo"><img src="web/photos/photo_028.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="43" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_014.jpg" src="web/videos/video_014.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="44" data-kind="photo"><img src="web/photos/photo_029.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="45" data-kind="photo"><img src="web/photos/photo_030.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="46" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_015.jpg" src="web/videos/video_015.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="47" data-kind="photo"><img src="web/photos/photo_031.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="48" data-kind="photo"><img src="web/photos/photo_032.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="49" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_016.jpg" src="web/videos/video_016.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="50" data-kind="photo"><img src="web/photos/photo_033.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="51" data-kind="photo"><img src="web/photos/photo_034.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="52" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_017.jpg" src="web/videos/video_017.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="53" data-kind="photo"><img src="web/photos/photo_035.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="54" data-kind="photo"><img src="web/photos/photo_036.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="55" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_018.jpg" src="web/videos/video_018.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="56" data-kind="photo"><img src="web/photos/photo_037.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="57" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_019.jpg" src="web/videos/video_019.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="58" data-kind="photo"><img src="web/photos/photo_038.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="59" data-kind="photo"><img src="web/photos/photo_039.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="60" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_020.jpg" src="web/videos/video_020.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="61" data-kind="photo"><img src="web/photos/photo_040.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="62" data-kind="photo"><img src="web/photos/photo_041.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="63" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_021.jpg" src="web/videos/video_021.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="64" data-kind="photo"><img src="web/photos/photo_042.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="65" data-kind="photo"><img src="web/photos/photo_043.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="66" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_022.jpg" src="web/videos/video_022.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="67" data-kind="photo"><img src="web/photos/photo_044.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="68" data-kind="photo"><img src="web/photos/photo_045.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="69" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_023.jpg" src="web/videos/video_023.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="70" data-kind="photo"><img src="web/photos/photo_046.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="71" data-kind="photo"><img src="web/photos/photo_047.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="72" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_024.jpg" src="web/videos/video_024.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="73" data-kind="photo"><img src="web/photos/photo_048.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="74" data-kind="video">
+        <video playsinline muted preload="none" poster="web/posters/video_025.jpg" src="web/videos/video_025.mp4"></video>
+        <button class="video-mute" type="button" aria-label="Toggle sound">🔇</button>
+      </div>
+      <div class="slide" data-idx="75" data-kind="photo"><img src="web/photos/photo_049.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="76" data-kind="photo"><img src="web/photos/photo_050.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="77" data-kind="photo"><img src="web/photos/photo_051.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="78" data-kind="photo"><img src="web/photos/photo_052.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="79" data-kind="photo"><img src="web/photos/photo_053.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="80" data-kind="photo"><img src="web/photos/photo_054.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="81" data-kind="photo"><img src="web/photos/photo_055.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="82" data-kind="photo"><img src="web/photos/photo_056.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="83" data-kind="photo"><img src="web/photos/photo_057.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="84" data-kind="photo"><img src="web/photos/photo_058.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="85" data-kind="photo"><img src="web/photos/photo_059.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="86" data-kind="photo"><img src="web/photos/photo_060.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="87" data-kind="photo"><img src="web/photos/photo_061.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="88" data-kind="photo"><img src="web/photos/photo_062.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="89" data-kind="photo"><img src="web/photos/photo_063.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="90" data-kind="photo"><img src="web/photos/photo_064.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="91" data-kind="photo"><img src="web/photos/photo_065.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="92" data-kind="photo"><img src="web/photos/photo_066.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="93" data-kind="photo"><img src="web/photos/photo_067.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="94" data-kind="photo"><img src="web/photos/photo_068.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="95" data-kind="photo"><img src="web/photos/photo_069.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="96" data-kind="photo"><img src="web/photos/photo_070.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="97" data-kind="photo"><img src="web/photos/photo_071.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="98" data-kind="photo"><img src="web/photos/photo_072.jpg" alt="Us" loading="lazy" /></div>
+      <div class="slide" data-idx="99" data-kind="photo"><img src="web/photos/photo_073.jpg" alt="Us" loading="lazy" /></div>
+    </div>
+    <div class="dots" id="dots">
+      <div class="track"><div class="fill" id="dotsFill"></div></div>
+      <span class="count" id="dotsCount">1 / 100</span>
+    </div>
+
+    <a class="squircle-link" href="https://photos.app.goo.gl/v8k7T1eb186UQUYE8" target="_blank" rel="noopener">
+      <span class="squircle-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+      </span>
+      <span class="squircle-text">
+        <span class="t1">See all our photos</span>
+        <span class="t2">Opens the live album ↗</span>
+      </span>
+    </a>
+
+    <div class="cel-actions">
+      <button class="pill-btn" id="soundToggle" type="button">🔇 Sound off</button>
+      <button class="pill-btn primary" id="closeCel" type="button">Close, my love 🩷</button>
+    </div>
+  </div>
+</div>
+
+<!-- hidden rotating background-music player for the celebration moment -->
+<div id="ytPlayer" style="position:fixed; width:1px; height:1px; opacity:0; pointer-events:none; overflow:hidden;" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- target time: Sept 30 2026 00:00:00 AEST (UTC+10, fixed offset) ---------- */
+  var TARGET_UTC_MS = Date.UTC(2026,8,29,14,0,0); // Sep 30 00:00 AEST = Sep 29 14:00 UTC
+
+  var dDays=document.getElementById('dDays'),
+      dHours=document.getElementById('dHours'),
+      dMins=document.getElementById('dMins'),
+      dSecs=document.getElementById('dSecs'),
+      celebration=document.getElementById('celebration'),
+      testZone=document.getElementById('testZone');
+
+  var celebrated=false;
+  var prevVals={d:null,h:null,m:null,s:null};
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function tickUnit(el,newVal){
+    if(prevVals[el.dataset.k]!==newVal){
+      el.parentElement.classList.remove('tick');
+      void el.parentElement.offsetWidth;
+      el.parentElement.classList.add('tick');
+      prevVals[el.dataset.k]=newVal;
+    }
+    el.textContent=pad(newVal);
+  }
+  dDays.dataset.k='d'; dHours.dataset.k='h'; dMins.dataset.k='m'; dSecs.dataset.k='s';
+
+  function render(){
+    var now=Date.now();
+    var diff=TARGET_UTC_MS-now;
+    if(diff<=0){
+      dDays.textContent='00';dHours.textContent='00';dMins.textContent='00';dSecs.textContent='00';
+      triggerCelebration();
+      return;
+    }
+    var totalSec=Math.floor(diff/1000);
+    var days=Math.floor(totalSec/86400);
+    var hours=Math.floor((totalSec%86400)/3600);
+    var mins=Math.floor((totalSec%3600)/60);
+    var secs=totalSec%60;
+    tickUnit(dDays,days); tickUnit(dHours,hours); tickUnit(dMins,mins); tickUnit(dSecs,secs);
+  }
+
+  var timer=setInterval(render,1000);
+  render();
+
+  /* ---------- floating hearts background ---------- */
+  var heartField=document.getElementById('heartField');
+  var heartEmojis=['💗','💕','🩷','🩵','💙','🤍'];
+  function spawnHeart(){
+    var h=document.createElement('div');
+    h.className='float-heart';
+    h.textContent=heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
+    h.style.left=(Math.random()*100)+'vw';
+    h.style.setProperty('--drift',(Math.random()*60-30)+'px');
+    h.style.animationDuration=(9+Math.random()*8)+'s';
+    h.style.fontSize=(1+Math.random()*1.3)+'rem';
+    heartField.appendChild(h);
+    setTimeout(function(){ h.remove(); }, 18000);
+  }
+  var heartInterval=setInterval(spawnHeart, 1400);
+  for(var i=0;i<5;i++) setTimeout(spawnHeart, i*300);
+
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduceMotion){ clearInterval(heartInterval); heartField.style.display='none'; }
+
+  /* ---------- confetti ---------- */
+  var canvas=document.getElementById('confettiCanvas'), ctx=canvas.getContext('2d');
+  var confettiPieces=[], confettiRunning=false;
+  function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  var confettiColors=['#ff9ec7','#ffd6e8','#9cd0ff','#cfe9ff','#ffe1a8','#ffffff'];
+  function launchConfetti(){
+    if(reduceMotion) return;
+    confettiPieces=[];
+    var count=90;
+    for(var i=0;i<count;i++){
+      confettiPieces.push({
+        x:Math.random()*canvas.width,
+        y:-20-Math.random()*canvas.height*0.5,
+        r:4+Math.random()*6,
+        c:confettiColors[Math.floor(Math.random()*confettiColors.length)],
+        vy:2+Math.random()*3,
+        vx:(Math.random()-0.5)*2.2,
+        rot:Math.random()*360,
+        vr:(Math.random()-0.5)*8,
+        shape: Math.random()<0.35 ? 'heart' : 'square'
+      });
+    }
+    confettiRunning=true;
+    requestAnimationFrame(animateConfetti);
+    setTimeout(function(){ confettiRunning=false; }, 6500);
+  }
+  function drawHeart(c,x,y,size,rotDeg,color){
+    c.save(); c.translate(x,y); c.rotate(rotDeg*Math.PI/180);
+    c.beginPath();
+    var s=size/2;
+    c.moveTo(0,s*0.4);
+    c.bezierCurveTo(0,-s*0.2, -s,-s*0.2, -s,s*0.3);
+    c.bezierCurveTo(-s, s*0.9, 0, s*1.1, 0, s*1.5);
+    c.bezierCurveTo(0, s*1.1, s, s*0.9, s, s*0.3);
+    c.bezierCurveTo(s, -s*0.2, 0, -s*0.2, 0, s*0.4);
+    c.fillStyle=color; c.fill(); c.restore();
+  }
+  function animateConfetti(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confettiPieces.forEach(function(p){
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+      if(p.shape==='heart'){ drawHeart(ctx,p.x,p.y,p.r*1.6,p.rot,p.c); }
+      else{
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle=p.c; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
+        ctx.restore();
+      }
+    });
+    confettiPieces=confettiPieces.filter(function(p){ return p.y < canvas.height+40; });
+    if(confettiRunning || confettiPieces.length){
+      requestAnimationFrame(animateConfetti);
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+  }
+
+  /* ---------- background music: rotates through 4 songs during celebration ---------- */
+  var YT_VIDEO_IDS=['5iRnoexcXtA','Ccuis5dUcWI','SNOVHjfXr18','d1FnonyWBJA'];
+  var ytPlayer=null, ytReady=false, ytStartQueued=false, ytCurrentIdx=0;
+
+  function loadYouTubeAPI(){
+    if(window.YT && window.YT.Player){ onYouTubeIframeAPIReady(); return; }
+    if(document.getElementById('ytApiScript')) return;
+    var tag=document.createElement('script');
+    tag.id='ytApiScript';
+    tag.src='https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  }
+  window.onYouTubeIframeAPIReady=function(){
+    ytReady=true;
+    ytPlayer=new YT.Player('ytPlayer', {
+      height:'1', width:'1',
+      videoId:YT_VIDEO_IDS[0],
+      playerVars:{ autoplay:0, controls:0, rel:0, playsinline:1 },
+      events:{
+        onReady:function(){ if(ytStartQueued){ ytStartQueued=false; startBackgroundMusic(); } },
+        onStateChange:function(ev){
+          if(ev.data===YT.PlayerState.ENDED){
+            ytCurrentIdx=(ytCurrentIdx+1)%YT_VIDEO_IDS.length;
+            ytPlayer.loadVideoById(YT_VIDEO_IDS[ytCurrentIdx]);
+          }
+        }
+      }
+    });
+  };
+  function startBackgroundMusic(){
+    if(!ytReady || !ytPlayer || !ytPlayer.playVideo){ ytStartQueued=true; return; }
+    try{
+      ytPlayer.mute(); // start muted to satisfy autoplay policy, then unmute right after (gesture-triggered call)
+      ytPlayer.playVideo();
+      if(soundOn){ setTimeout(function(){ try{ ytPlayer.unMute(); ytPlayer.setVolume(45); }catch(e){} }, 150); }
+    }catch(e){ /* fail silently */ }
+  }
+  function stopBackgroundMusic(){
+    try{ if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo(); }catch(e){}
+  }
+  loadYouTubeAPI();
+
+  /* ---------- sound (soft chime, gesture-gated, muted by default) ---------- */
+  var audioCtx=null, soundOn=false;
+  var soundToggle=document.getElementById('soundToggle');
+  function playChime(){
+    if(!soundOn) return;
+    try{
+      if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      var now=audioCtx.currentTime;
+      var notes=[523.25,659.25,783.99,1046.5];
+      notes.forEach(function(freq,i){
+        var osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+        osc.type='sine'; osc.frequency.value=freq;
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        var t0=now+i*0.18;
+        gain.gain.setValueAtTime(0,t0);
+        gain.gain.linearRampToValueAtTime(0.09,t0+0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001,t0+0.9);
+        osc.start(t0); osc.stop(t0+0.95);
+      });
+    }catch(e){ /* audio unavailable, fail silently */ }
+  }
+  soundToggle.addEventListener('click', function(){
+    soundOn=!soundOn;
+    soundToggle.textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off';
+    if(soundOn){
+      playChime();
+      try{ if(ytPlayer && ytPlayer.unMute){ ytPlayer.unMute(); ytPlayer.setVolume(45); } }catch(e){}
+    } else {
+      try{ if(ytPlayer && ytPlayer.mute) ytPlayer.mute(); }catch(e){}
+    }
+  });
+
+  /* ---------- carousel (photos dropped in later) ---------- */
+  var slides=Array.prototype.slice.call(document.querySelectorAll('#carousel .slide'));
+  var dotsFill=document.getElementById('dotsFill');
+  var dotsCount=document.getElementById('dotsCount');
+  var curSlide=0, carouselTimer=null;
+  function updateProgress(){
+    if(!dotsFill) return;
+    dotsFill.style.width = ((curSlide+1)/slides.length*100)+'%';
+    dotsCount.textContent = (curSlide+1)+' / '+slides.length;
+  }
+  function pauseAllVideos(){
+    slides.forEach(function(s){
+      var v=s.querySelector('video');
+      if(v){ v.pause(); }
+    });
+  }
+  function playActiveVideoIfAny(){
+    var v=slides[curSlide].querySelector('video');
+    if(v){
+      if(!v.src && v.dataset.src){ v.src=v.dataset.src; }
+      v.play().catch(function(){});
+    }
+  }
+  function goToSlide(i){
+    slides[curSlide].classList.remove('active');
+    pauseAllVideos();
+    curSlide=(i+slides.length)%slides.length;
+    slides[curSlide].classList.add('active');
+    playActiveVideoIfAny();
+    updateProgress();
+  }
+  function startCarouselAuto(){
+    if(slides.length<2) return;
+    clearInterval(carouselTimer);
+    var activeVideo=slides[curSlide].querySelector('video');
+    if(activeVideo){
+      // let the video play to completion instead of cutting it off
+      var onEnded=function(){ activeVideo.removeEventListener('ended', onEnded); goToSlide(curSlide+1); startCarouselAuto(); };
+      activeVideo.addEventListener('ended', onEnded);
+    } else {
+      carouselTimer=setInterval(function(){ goToSlide(curSlide+1); startCarouselAuto(); }, 3200);
+    }
+  }
+  updateProgress();
+
+  // per-video mute toggle buttons
+  document.querySelectorAll('.video-mute').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var v=btn.parentElement.querySelector('video');
+      if(!v) return;
+      v.muted=!v.muted;
+      btn.textContent = v.muted ? '🔇' : '🔊';
+    });
+  });
+
+  var carouselEl=document.getElementById('carousel');
+  var touchStartX=null;
+  carouselEl.addEventListener('touchstart', function(e){ touchStartX=e.touches[0].clientX; clearInterval(carouselTimer); }, {passive:true});
+  carouselEl.addEventListener('touchend', function(e){
+    if(touchStartX===null) return;
+    var dx=e.changedTouches[0].clientX-touchStartX;
+    if(Math.abs(dx)>40){
+      goToSlide(curSlide + (dx<0?1:-1));
+    } else {
+      // tap (no real swipe): left half of frame = back, right half = forward
+      var rect=carouselEl.getBoundingClientRect();
+      var tapX=e.changedTouches[0].clientX-rect.left;
+      goToSlide(curSlide + (tapX < rect.width/2 ? -1 : 1));
+    }
+    touchStartX=null;
+    startCarouselAuto();
+  }, {passive:true});
+  carouselEl.addEventListener('click', function(e){
+    // desktop click support (touch devices already handled above)
+    if('ontouchstart' in window) return;
+    var rect=carouselEl.getBoundingClientRect();
+    var clickX=e.clientX-rect.left;
+    goToSlide(curSlide + (clickX < rect.width/2 ? -1 : 1));
+    startCarouselAuto();
+  });
+
+  /* ---------- celebration trigger ---------- */
+  function triggerCelebration(){
+    if(celebrated) return;
+    celebrated=true;
+    clearInterval(timer);
+    celebration.classList.add('show');
+    launchConfetti();
+    startCarouselAuto();
+    if(soundOn) playChime();
+    startBackgroundMusic();
+    document.body.style.overflow='hidden';
+  }
+  document.getElementById('closeCel').addEventListener('click', function(){
+    celebration.classList.remove('show');
+    clearInterval(carouselTimer);
+    stopBackgroundMusic();
+    document.body.style.overflow='';
+  });
+
+  /* ---------- hidden test trigger: double-tap / double-click top-right ---------- */
+  var lastTap=0;
+  function handleDoubleTrigger(){
+    var now=Date.now();
+    if(now-lastTap<400){
+      celebrated=false; // allow re-testing
+      triggerCelebration();
+    }
+    lastTap=now;
+  }
+  testZone.addEventListener('dblclick', function(){ celebrated=false; triggerCelebration(); });
+  testZone.addEventListener('touchend', handleDoubleTrigger);
+
+})();
+</script>
+</body>
+</html>
