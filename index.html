@@ -796,6 +796,16 @@ Lab you po.</p>
     } else {
       try{ if(ytPlayer && ytPlayer.mute) ytPlayer.mute(); }catch(e){}
     }
+    // sync whichever video is currently showing in the carousel
+    var activeSlide=document.querySelector('#carousel .slide.active');
+    if(activeSlide){
+      var v=activeSlide.querySelector('video');
+      var btn=activeSlide.querySelector('.video-mute');
+      if(v){
+        v.muted=!soundOn;
+        if(btn) btn.textContent = v.muted ? '🔇' : '🔊';
+      }
+    }
   });
 
   /* ---------- carousel (photos dropped in later) ---------- */
@@ -818,12 +828,23 @@ Lab you po.</p>
     var v=slides[curSlide].querySelector('video');
     if(v){
       if(!v.src && v.dataset.src){ v.src=v.dataset.src; }
+      // reflect the master Sound toggle immediately, so video audio matches
+      // the overlay's sound state right away instead of waiting for a tap
+      // on the per-video button
+      v.muted = !soundOn;
+      var btn=slides[curSlide].querySelector('.video-mute');
+      if(btn) btn.textContent = v.muted ? '🔇' : '🔊';
       var attempt=function(){
         var p=v.play();
         if(p && p.catch){
           p.catch(function(){
-            // some browsers need an explicit load() before play() succeeds
-            try{ v.load(); v.play().catch(function(){}); }catch(e){}
+            // some browsers reject an audible play() without a direct gesture;
+            // fall back to a muted attempt so the video still plays visually
+            try{
+              v.muted=true;
+              if(btn) btn.textContent='🔇';
+              v.load(); v.play().catch(function(){});
+            }catch(e){}
           });
         }
       };
